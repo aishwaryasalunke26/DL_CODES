@@ -4,15 +4,16 @@ Assignments 2 to 5 | Python Code for Jupyter Notebook
 BE Information Technology | SPPU
 
 How to use this document
-•	Create a separate Jupyter Notebook for each assignment.
-•	Run the code from top to bottom. Each assignment is divided into logical sections so you can execute and explain it cell by cell.
-•	The code is based on the uploaded practical PDFs. Obvious formatting issues and the CNN double-normalization issue have been cleaned up so the programs are easier to run.
-•	The Assignment 4 practical contains two parts: Fashion-MNIST image reconstruction and ECG anomaly detection.
+* Create a separate Jupyter Notebook for each assignment.
+* Run the code from top to bottom. Each assignment is divided into logical sections so you can execute and explain it cell by cell.
+* The code is based on the uploaded practical PDFs. Obvious formatting issues and the CNN double-normalization issue have been cleaned up so the programs are easier to run.
+* The Assignment 4 practical contains two parts: Fashion-MNIST image reconstruction and ECG anomaly detection.
 Install required packages once
 Run this in a Jupyter cell only if the packages are not already installed in the Python environment used by your notebook.
 %pip install tensorflow matplotlib numpy pandas scikit-learn gensim nltk
 Installation is per Python environment, not per notebook. After installing or upgrading packages, restart the Jupyter kernel.
- 
+
+
 Assignment 2: Feedforward Neural Network using Keras and TensorFlow
 Aim: To build, train and evaluate a feedforward neural network on the MNIST handwritten-digit dataset.
 Dataset: MNIST contains 28 × 28 grayscale images of handwritten digits from 0 to 9.
@@ -96,12 +97,13 @@ plt.ylabel("Loss / Accuracy")
 plt.legend()
 plt.show()
 Important points to explain
-•	The 28 × 28 image is flattened into 784 input values because a Dense layer expects a one-dimensional feature vector.
-•	Dividing by 255 normalizes pixel values to the range 0 to 1.
-•	ReLU is used in the hidden layers. Softmax produces probabilities for the 10 digit classes.
-•	Categorical cross-entropy is used because the labels are one-hot encoded.
-•	The uploaded code uses Adam. The SPPU syllabus mentions SGD, so if asked, explain that the provided practical implementation uses Adam as its optimizer.
- 
+* The 28 × 28 image is flattened into 784 input values because a Dense layer expects a one-dimensional feature vector.
+* Dividing by 255 normalizes pixel values to the range 0 to 1.
+* ReLU is used in the hidden layers. Softmax produces probabilities for the 10 digit classes.
+* Categorical cross-entropy is used because the labels are one-hot encoded.
+* The uploaded code uses Adam. The SPPU syllabus mentions SGD, so if asked, explain that the provided practical implementation uses Adam as its optimizer.
+
+
 Assignment 3: CNN Image Classification using MNIST
 Aim: To build a Convolutional Neural Network (CNN) that classifies handwritten digits from MNIST.
 A CNN learns image features such as edges and shapes through convolution and pooling layers.
@@ -185,12 +187,13 @@ plt.ylim([0.5, 1])
 plt.legend(loc="lower right")
 plt.show()
 Important points to explain
-•	Conv2D applies filters to identify image features such as edges, curves and patterns.
-•	MaxPooling reduces the spatial size of feature maps and keeps important information.
-•	Flatten converts the feature maps into a one-dimensional vector for the Dense layers.
-•	The final Dense layer has 10 neurons because MNIST has 10 digit classes.
-•	The original PDF normalizes the images and then divides by 255 again after reshaping. This document corrects that: normalization is performed only once.
- 
+* Conv2D applies filters to identify image features such as edges, curves and patterns.
+* MaxPooling reduces the spatial size of feature maps and keeps important information.
+* Flatten converts the feature maps into a one-dimensional vector for the Dense layers.
+* The final Dense layer has 10 neurons because MNIST has 10 digit classes.
+* The original PDF normalizes the images and then divides by 255 again after reshaping. This document corrects that: normalization is performed only once.
+
+
 Assignment 4: Autoencoder for Reconstruction and Anomaly Detection
 Part A: Fashion-MNIST Image Reconstruction
 Aim: To build an autoencoder that compresses Fashion-MNIST images into a latent representation and reconstructs the images.
@@ -458,12 +461,13 @@ test_predictions = predict(autoencoder, test_data, threshold)
 print("Testing results:")
 print_stats(test_predictions, test_labels)
 Important points to explain
-•	An autoencoder is a neural network that learns to reproduce its input.
-•	The encoder creates a smaller latent representation. The decoder reconstructs the original input.
-•	In ECG anomaly detection, the model is trained using normal ECG signals. Unusual signals generally produce higher reconstruction error.
-•	MAE means Mean Absolute Error. The threshold is calculated as the mean training reconstruction error plus one standard deviation.
-•	In this practical, the prediction function returns True for a normal signal and False for an anomalous signal. The label convention follows the uploaded code.
- 
+* An autoencoder is a neural network that learns to reproduce its input.
+* The encoder creates a smaller latent representation. The decoder reconstructs the original input.
+* In ECG anomaly detection, the model is trained using normal ECG signals. Unusual signals generally produce higher reconstruction error.
+* MAE means Mean Absolute Error. The threshold is calculated as the mean training reconstruction error plus one standard deviation.
+* In this practical, the prediction function returns True for a normal signal and False for an anomalous signal. The label convention follows the uploaded code.
+
+
 Assignment 5: Continuous Bag of Words (CBOW) Model
 Aim: To prepare text data, train a CBOW Word2Vec model and examine word vectors and context-based predictions.
 The example uses a short passage from Alice in Wonderland. In Gensim Word2Vec, sg=0 selects CBOW; this is also the default.
@@ -581,25 +585,28 @@ plt.xlabel("Principal Component 1")
 plt.ylabel("Principal Component 2")
 plt.show()
 Important points to explain
-•	CBOW stands for Continuous Bag of Words. It predicts a target word using the surrounding context words.
-•	Tokenization splits text into sentences and words. Stop words such as 'the' and 'is' are removed.
-•	The window size is 5. The practical forms a context using two words before and two words after the target word.
-•	Word2Vec learns a vector representation for each word. Similar words can be found using most_similar().
-•	PCA reduces the word vectors to two dimensions so they can be displayed on a graph.
-•	The uploaded code uses Gensim Word2Vec with sg=0, which selects CBOW. The context-target list is also generated separately for demonstration.
- 
+* CBOW stands for Continuous Bag of Words. It predicts a target word using the surrounding context words.
+* Tokenization splits text into sentences and words. Stop words such as 'the' and 'is' are removed.
+* The window size is 5. The practical forms a context using two words before and two words after the target word.
+* Word2Vec learns a vector representation for each word. Similar words can be found using most_similar().
+* PCA reduces the word vectors to two dimensions so they can be displayed on a graph.
+* The uploaded code uses Gensim Word2Vec with sg=0, which selects CBOW. The context-target list is also generated separately for demonstration.
+
+
 Jupyter Notebook Execution Checklist
-•	Open Jupyter Notebook and create a new Python 3 notebook.
-•	Run the installation cell only if a required package is missing.
-•	Run import statements first, followed by dataset loading and preprocessing.
-•	Define the model, compile it, and then run the training cell.
-•	Run evaluation and plotting cells after training completes.
-•	If a variable is not defined, check whether the earlier cell was executed. If package installation was just performed, restart the kernel and run the notebook from the top.
+* Open Jupyter Notebook and create a new Python 3 notebook.
+* Run the installation cell only if a required package is missing.
+* Run import statements first, followed by dataset loading and preprocessing.
+* Define the model, compile it, and then run the training cell.
+* Run evaluation and plotting cells after training completes.
+* If a variable is not defined, check whether the earlier cell was executed. If package installation was just performed, restart the kernel and run the notebook from the top.
 Common errors
-•	ModuleNotFoundError: install the missing package in the active notebook environment using %pip install package-name.
-•	NameError: run the earlier cell that defines the missing variable.
-•	TensorFlow GPU warning on native Windows: TensorFlow may use the CPU. This warning alone does not mean the code cannot run.
-•	Memory or slow-training issue: reduce batch size or epochs, or run the model on a smaller subset while testing.
+* ModuleNotFoundError: install the missing package in the active notebook environment using %pip install package-name.
+* NameError: run the earlier cell that defines the missing variable.
+* TensorFlow GPU warning on native Windows: TensorFlow may use the CPU. This warning alone does not mean the code cannot run.
+* Memory or slow-training issue: reduce batch size or epochs, or run the model on a smaller subset while testing.
 One important distinction
 The uploaded syllabus says Assignment 2 should use SGD, while the supplied Assignment 2 PDF uses Adam(0.01). This document keeps Adam to match the supplied practical code. If your faculty specifically requires SGD, change the optimizer to SGD, for example: optimizer = tf.keras.optimizers.SGD(learning_rate=0.01).
 For Assignment 3, the uploaded PDF divides training into 5 epochs followed by another 10 epochs. This document uses one 15-epoch training call, which is simpler and continues training for the same total number of epochs.
+Deep Learning Practicals | Assignments 2-5
+
