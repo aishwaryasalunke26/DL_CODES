@@ -1,0 +1,612 @@
+﻿DEEP LEARNING PRACTICALS
+Assignments 2 to 5 | Python Code for Jupyter Notebook
+
+BE Information Technology | SPPU
+
+How to use this document
+* Create a separate Jupyter Notebook for each assignment.
+* Run the code from top to bottom. Each assignment is divided into logical sections so you can execute and explain it cell by cell.
+* The code is based on the uploaded practical PDFs. Obvious formatting issues and the CNN double-normalization issue have been cleaned up so the programs are easier to run.
+* The Assignment 4 practical contains two parts: Fashion-MNIST image reconstruction and ECG anomaly detection.
+Install required packages once
+Run this in a Jupyter cell only if the packages are not already installed in the Python environment used by your notebook.
+%pip install tensorflow matplotlib numpy pandas scikit-learn gensim nltk
+Installation is per Python environment, not per notebook. After installing or upgrading packages, restart the Jupyter kernel.
+
+
+Assignment 2: Feedforward Neural Network using Keras and TensorFlow
+Aim: To build, train and evaluate a feedforward neural network on the MNIST handwritten-digit dataset.
+Dataset: MNIST contains 28 × 28 grayscale images of handwritten digits from 0 to 9.
+Code
+# 1. Import required libraries
+from sklearn.preprocessing import LabelBinarizer
+from sklearn.metrics import classification_report
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Input, Dense
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.datasets import mnist
+import matplotlib.pyplot as plt
+import numpy as np
+ 
+# 2. Load the MNIST dataset
+print("[INFO] Accessing MNIST dataset...")
+(trainX, trainY), (testX, testY) = mnist.load_data()
+ 
+# 3. Reshape each 28 x 28 image into a 784-element vector
+trainX = trainX.reshape((trainX.shape[0], 28 * 28))
+testX = testX.reshape((testX.shape[0], 28 * 28))
+ 
+# 4. Convert pixel values from 0-255 into the range 0-1
+trainX = trainX.astype("float32") / 255.0
+testX = testX.astype("float32") / 255.0
+ 
+# 5. Convert digit labels into one-hot encoded form
+lb = LabelBinarizer()
+trainY = lb.fit_transform(trainY)
+testY = lb.transform(testY)
+ 
+# 6. Define the feedforward neural network
+model = Sequential()
+model.add(Input(shape=(784,)))
+model.add(Dense(256, activation="relu"))
+model.add(Dense(128, activation="relu"))
+model.add(Dense(64, activation="relu"))
+model.add(Dense(10, activation="softmax"))
+ 
+# 7. Compile the model
+optimizer = Adam(learning_rate=0.01)
+model.compile(
+    loss="categorical_crossentropy",
+    optimizer=optimizer,
+    metrics=["accuracy"]
+)
+ 
+# 8. Train the model
+print("[INFO] Training network...")
+H = model.fit(
+    trainX,
+    trainY,
+    validation_data=(testX, testY),
+    epochs=10,
+    batch_size=128
+)
+ 
+# 9. Evaluate the model and display the classification report
+print("[INFO] Evaluating network...")
+predictions = model.predict(testX, batch_size=128)
+ 
+print(classification_report(
+    testY.argmax(axis=1),
+    predictions.argmax(axis=1),
+    target_names=[str(x) for x in lb.classes_]
+))
+ 
+# 10. Plot training and validation loss and accuracy
+epochs = len(H.history["loss"])
+plt.style.use("ggplot")
+plt.figure(figsize=(9, 5))
+ 
+plt.plot(np.arange(epochs), H.history["loss"], label="Training Loss")
+plt.plot(np.arange(epochs), H.history["val_loss"], label="Validation Loss")
+plt.plot(np.arange(epochs), H.history["accuracy"], label="Training Accuracy")
+plt.plot(np.arange(epochs), H.history["val_accuracy"], label="Validation Accuracy")
+ 
+plt.title("Training Loss and Accuracy")
+plt.xlabel("Epoch")
+plt.ylabel("Loss / Accuracy")
+plt.legend()
+plt.show()
+Important points to explain
+* The 28 × 28 image is flattened into 784 input values because a Dense layer expects a one-dimensional feature vector.
+* Dividing by 255 normalizes pixel values to the range 0 to 1.
+* ReLU is used in the hidden layers. Softmax produces probabilities for the 10 digit classes.
+* Categorical cross-entropy is used because the labels are one-hot encoded.
+* The uploaded code uses Adam. The SPPU syllabus mentions SGD, so if asked, explain that the provided practical implementation uses Adam as its optimizer.
+
+
+Assignment 3: CNN Image Classification using MNIST
+Aim: To build a Convolutional Neural Network (CNN) that classifies handwritten digits from MNIST.
+A CNN learns image features such as edges and shapes through convolution and pooling layers.
+Code
+# 1. Import required libraries
+import tensorflow as tf
+from tensorflow.keras import datasets, layers, models
+import matplotlib.pyplot as plt
+ 
+# 2. Load the MNIST dataset
+(train_images, train_labels), (test_images, test_labels) = datasets.mnist.load_data()
+ 
+# 3. Normalize pixel values only once
+train_images = train_images.astype("float32") / 255.0
+test_images = test_images.astype("float32") / 255.0
+ 
+# 4. Display a few sample training images
+class_names = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+ 
+plt.figure(figsize=(8, 4))
+for i in range(5):
+    plt.subplot(1, 5, i + 1)
+    plt.xticks([])
+    plt.yticks([])
+    plt.grid(False)
+    plt.imshow(train_images[i], cmap="gray")
+    plt.xlabel(class_names[int(train_labels[i])])
+plt.show()
+ 
+# 5. Reshape images to include the channel dimension
+# MNIST images are grayscale, so the channel dimension is 1
+train_images = train_images.reshape((60000, 28, 28, 1))
+test_images = test_images.reshape((10000, 28, 28, 1))
+ 
+# 6. Define the CNN architecture
+model = models.Sequential()
+ 
+model.add(layers.Input(shape=(28, 28, 1)))
+model.add(layers.Conv2D(32, (3, 3), activation="relu"))
+model.add(layers.MaxPooling2D((2, 2)))
+ 
+model.add(layers.Conv2D(64, (3, 3), activation="relu"))
+model.add(layers.MaxPooling2D((2, 2)))
+ 
+model.add(layers.Conv2D(64, (3, 3), activation="relu"))
+ 
+# 7. Convert feature maps into a one-dimensional vector
+model.add(layers.Flatten())
+ 
+# 8. Add dense classification layers
+model.add(layers.Dense(64, activation="relu"))
+model.add(layers.Dense(10, activation="softmax"))
+ 
+# 9. Compile the model
+model.compile(
+    optimizer="adam",
+    loss="sparse_categorical_crossentropy",
+    metrics=["accuracy"]
+)
+ 
+# 10. Train the model
+history = model.fit(
+    train_images,
+    train_labels,
+    epochs=15,
+    validation_data=(test_images, test_labels)
+)
+ 
+# 11. Evaluate the model
+test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=2)
+print("Test accuracy:", test_acc)
+print("Test loss:", test_loss)
+ 
+# 12. Plot training and validation accuracy
+plt.figure(figsize=(8, 5))
+plt.plot(history.history["accuracy"], label="Training Accuracy")
+plt.plot(history.history["val_accuracy"], label="Validation Accuracy")
+plt.xlabel("Epoch")
+plt.ylabel("Accuracy")
+plt.ylim([0.5, 1])
+plt.legend(loc="lower right")
+plt.show()
+Important points to explain
+* Conv2D applies filters to identify image features such as edges, curves and patterns.
+* MaxPooling reduces the spatial size of feature maps and keeps important information.
+* Flatten converts the feature maps into a one-dimensional vector for the Dense layers.
+* The final Dense layer has 10 neurons because MNIST has 10 digit classes.
+* The original PDF normalizes the images and then divides by 255 again after reshaping. This document corrects that: normalization is performed only once.
+
+
+Assignment 4: Autoencoder for Reconstruction and Anomaly Detection
+Part A: Fashion-MNIST Image Reconstruction
+Aim: To build an autoencoder that compresses Fashion-MNIST images into a latent representation and reconstructs the images.
+The encoder compresses the input. The decoder attempts to rebuild the original image from the compressed representation.
+# 1. Import required libraries
+import matplotlib.pyplot as plt
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras import layers, losses
+from tensorflow.keras.datasets import fashion_mnist
+from tensorflow.keras.models import Model
+ 
+# 2. Load Fashion-MNIST images
+(x_train, _), (x_test, _) = fashion_mnist.load_data()
+ 
+# 3. Normalize image pixel values
+x_train = x_train.astype("float32") / 255.0
+x_test = x_test.astype("float32") / 255.0
+ 
+print("Training data shape:", x_train.shape)
+print("Testing data shape:", x_test.shape)
+ 
+# 4. Set the size of the compressed representation
+latent_dim = 64
+ 
+# 5. Define the Autoencoder class
+class Autoencoder(Model):
+    def __init__(self, latent_dim):
+        super(Autoencoder, self).__init__()
+        self.latent_dim = latent_dim
+ 
+        # Encoder: flatten image and compress it to 64 values
+        self.encoder = tf.keras.Sequential([
+            layers.Flatten(),
+            layers.Dense(latent_dim, activation="relu")
+        ])
+ 
+        # Decoder: reconstruct the 28 x 28 image
+        self.decoder = tf.keras.Sequential([
+            layers.Dense(784, activation="sigmoid"),
+            layers.Reshape((28, 28))
+        ])
+ 
+    def call(self, x):
+        encoded = self.encoder(x)
+        decoded = self.decoder(encoded)
+        return decoded
+ 
+# 6. Create and compile the autoencoder
+autoencoder = Autoencoder(latent_dim)
+autoencoder.compile(
+    optimizer="adam",
+    loss=losses.MeanSquaredError()
+)
+ 
+# 7. Train the autoencoder
+# Input and target are the same because the model learns reconstruction
+history = autoencoder.fit(
+    x_train,
+    x_train,
+    epochs=10,
+    shuffle=True,
+    validation_data=(x_test, x_test)
+)
+ 
+# 8. Encode and reconstruct test images
+encoded_imgs = autoencoder.encoder(x_test).numpy()
+decoded_imgs = autoencoder.decoder(encoded_imgs).numpy()
+ 
+# 9. Display original and reconstructed images
+n = 10
+plt.figure(figsize=(20, 4))
+ 
+for i in range(n):
+    # Original image
+    ax = plt.subplot(2, n, i + 1)
+    plt.imshow(x_test[i], cmap="gray")
+    plt.title("Original")
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+ 
+    # Reconstructed image
+    ax = plt.subplot(2, n, i + 1 + n)
+    plt.imshow(decoded_imgs[i], cmap="gray")
+    plt.title("Reconstructed")
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+ 
+plt.show()
+Part B: ECG Anomaly Detection
+Aim: To train an autoencoder using normal ECG signals and identify unusual signals using reconstruction error.
+The ECG dataset is downloaded from the TensorFlow dataset URL used in the practical. An internet connection is required for the first download.
+# 1. Import required libraries
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import tensorflow as tf
+from sklearn.metrics import accuracy_score, precision_score, recall_score
+from sklearn.model_selection import train_test_split
+from tensorflow.keras import layers
+from tensorflow.keras.models import Model
+ 
+# 2. Load the ECG dataset
+url = "http://storage.googleapis.com/download.tensorflow.org/data/ecg.csv"
+dataframe = pd.read_csv(url, header=None)
+raw_data = dataframe.values
+ 
+# 3. Separate ECG readings and labels
+labels = raw_data[:, -1]
+data = raw_data[:, 0:-1]
+ 
+# 4. Split the data into training and testing sets
+train_data, test_data, train_labels, test_labels = train_test_split(
+    data,
+    labels,
+    test_size=0.2,
+    random_state=21
+)
+ 
+# 5. Normalize the data using training-set minimum and maximum
+min_val = tf.reduce_min(train_data)
+max_val = tf.reduce_max(train_data)
+ 
+train_data = (train_data - min_val) / (max_val - min_val)
+test_data = (test_data - min_val) / (max_val - min_val)
+ 
+# 6. Convert data types and labels
+train_data = tf.cast(train_data, tf.float32)
+test_data = tf.cast(test_data, tf.float32)
+ 
+train_labels = train_labels.astype(bool)
+test_labels = test_labels.astype(bool)
+ 
+# 7. Separate normal and anomalous ECG signals
+normal_train_data = train_data[train_labels]
+normal_test_data = test_data[test_labels]
+ 
+anomalous_train_data = train_data[~train_labels]
+anomalous_test_data = test_data[~test_labels]
+ 
+# 8. Display one normal and one anomalous ECG signal
+plt.grid()
+plt.plot(np.arange(140), normal_train_data[0])
+plt.title("A Normal ECG")
+plt.show()
+ 
+plt.grid()
+plt.plot(np.arange(140), anomalous_train_data[0])
+plt.title("An Anomalous ECG")
+plt.show()
+ 
+# 9. Define the Anomaly Detector autoencoder
+class AnomalyDetector(Model):
+    def __init__(self):
+        super(AnomalyDetector, self).__init__()
+ 
+        # Encoder compresses 140 input values
+        self.encoder = tf.keras.Sequential([
+            layers.Dense(32, activation="relu"),
+            layers.Dense(16, activation="relu"),
+            layers.Dense(8, activation="relu")
+        ])
+ 
+        # Decoder reconstructs the 140 input values
+        self.decoder = tf.keras.Sequential([
+            layers.Dense(16, activation="relu"),
+            layers.Dense(32, activation="relu"),
+            layers.Dense(140, activation="sigmoid")
+        ])
+ 
+    def call(self, x):
+        encoded = self.encoder(x)
+        decoded = self.decoder(encoded)
+        return decoded
+ 
+# 10. Create and compile the model
+autoencoder = AnomalyDetector()
+autoencoder.compile(optimizer="adam", loss="mae")
+ 
+# 11. Train only on normal ECG signals
+history = autoencoder.fit(
+    normal_train_data,
+    normal_train_data,
+    epochs=20,
+    batch_size=512,
+    validation_data=(test_data, test_data),
+    shuffle=True
+)
+ 
+# 12. Plot training and validation loss
+plt.figure(figsize=(8, 5))
+plt.plot(history.history["loss"], label="Training Loss")
+plt.plot(history.history["val_loss"], label="Validation Loss")
+plt.xlabel("Epoch")
+plt.ylabel("MAE Loss")
+plt.legend()
+plt.show()
+ 
+# 13. Reconstruct and compare one normal ECG signal
+encoded_data = autoencoder.encoder(normal_test_data).numpy()
+decoded_data = autoencoder.decoder(encoded_data).numpy()
+ 
+plt.plot(normal_test_data[0], "b", label="Input")
+plt.plot(decoded_data[0], "r", label="Reconstruction")
+plt.fill_between(
+    np.arange(140),
+    decoded_data[0],
+    normal_test_data[0],
+    color="lightcoral",
+    label="Error"
+)
+plt.title("Normal ECG Reconstruction")
+plt.legend()
+plt.show()
+ 
+# 14. Reconstruct and compare one anomalous ECG signal
+encoded_data = autoencoder.encoder(anomalous_test_data).numpy()
+decoded_data = autoencoder.decoder(encoded_data).numpy()
+ 
+plt.plot(anomalous_test_data[0], "b", label="Input")
+plt.plot(decoded_data[0], "r", label="Reconstruction")
+plt.fill_between(
+    np.arange(140),
+    decoded_data[0],
+    anomalous_test_data[0],
+    color="lightcoral",
+    label="Error"
+)
+plt.title("Anomalous ECG Reconstruction")
+plt.legend()
+plt.show()
+ 
+# 15. Calculate reconstruction error for normal training data
+reconstructions = autoencoder.predict(normal_train_data)
+train_loss = tf.keras.losses.mae(reconstructions, normal_train_data)
+ 
+plt.hist(train_loss.numpy(), bins=50)
+plt.xlabel("Training reconstruction loss")
+plt.ylabel("Number of examples")
+plt.show()
+ 
+# 16. Set anomaly threshold using mean + standard deviation
+threshold = np.mean(train_loss) + np.std(train_loss)
+print("Threshold:", threshold)
+ 
+# 17. Predict whether signals are normal
+# True means reconstruction loss is below threshold (normal)
+# False means reconstruction loss is above threshold (anomalous)
+def predict(model, data, threshold):
+    reconstructions = model(data)
+    loss = tf.keras.losses.mae(reconstructions, data)
+    return tf.math.less(loss, threshold)
+ 
+# 18. Print evaluation metrics
+def print_stats(predictions, labels):
+    print("Accuracy =", accuracy_score(labels, predictions))
+    print("Precision =", precision_score(labels, predictions))
+    print("Recall =", recall_score(labels, predictions))
+ 
+train_predictions = predict(autoencoder, train_data, threshold)
+print("Training results:")
+print_stats(train_predictions, train_labels)
+ 
+test_predictions = predict(autoencoder, test_data, threshold)
+print("Testing results:")
+print_stats(test_predictions, test_labels)
+Important points to explain
+* An autoencoder is a neural network that learns to reproduce its input.
+* The encoder creates a smaller latent representation. The decoder reconstructs the original input.
+* In ECG anomaly detection, the model is trained using normal ECG signals. Unusual signals generally produce higher reconstruction error.
+* MAE means Mean Absolute Error. The threshold is calculated as the mean training reconstruction error plus one standard deviation.
+* In this practical, the prediction function returns True for a normal signal and False for an anomalous signal. The label convention follows the uploaded code.
+
+
+Assignment 5: Continuous Bag of Words (CBOW) Model
+Aim: To prepare text data, train a CBOW Word2Vec model and examine word vectors and context-based predictions.
+The example uses a short passage from Alice in Wonderland. In Gensim Word2Vec, sg=0 selects CBOW; this is also the default.
+Code
+# 1. Import required libraries
+import re
+import nltk
+import gensim
+import numpy as np
+import matplotlib.pyplot as plt
+from nltk.corpus import stopwords
+from sklearn.decomposition import PCA
+ 
+# 2. Download NLTK resources
+nltk.download("punkt")
+nltk.download("punkt_tab")
+nltk.download("stopwords")
+ 
+# 3. Provide sample text
+sentences = """Alice 23 opened the door and found that it led into a
+small 90 passage, not much larger than a rat-hole: she knelt down and
+looked along the passage into the loveliest garden you ever saw.
+How she longed to get out of that dark hall, and wander about among
+those beds of bright flowers and those cool fountains, but she could
+not even get her head through the doorway; and even if my head would
+go through, thought poor Alice, it would be of very little use without
+my shoulders. Oh, how I wish I could shut up like a telescope! I think
+I could, if I only know how to begin. For, you see, so many out-of-the-way
+things had happened lately, that Alice had begun to think that very few
+things indeed were really impossible."""
+ 
+# 4. Clean special characters and numbers
+sentences = re.sub("[^A-Za-z]+", " ", sentences)
+sentences = re.sub(r"(?:^| )\w(?:$| )", " ", sentences).strip()
+ 
+# 5. Convert text to lowercase and split into sentences
+sentences = sentences.lower()
+all_sent = nltk.sent_tokenize(sentences)
+ 
+# 6. Tokenize each sentence into words
+all_words = [nltk.word_tokenize(sent) for sent in all_sent]
+ 
+# 7. Remove English stop words
+stop_words = set(stopwords.words("english"))
+for i in range(len(all_words)):
+    all_words[i] = [word for word in all_words[i] if word not in stop_words]
+ 
+data = all_words
+data1 = data[0]
+ 
+# 8. Train the Word2Vec model using CBOW
+model1 = gensim.models.Word2Vec(
+    data,
+    min_count=1,
+    vector_size=52,
+    window=5,
+    sg=0
+)
+ 
+# 9. Display the vocabulary
+vocabulary = model1.wv.index_to_key
+print("Vocabulary:")
+print(vocabulary)
+ 
+# 10. Get the vector and similar words for 'door'
+rd = "door"
+v1 = model1.wv[rd]
+print("Vector for", rd, ":", v1)
+ 
+similar_words = model1.wv.most_similar(rd)
+print("Words similar to", rd, ":")
+for word, score in similar_words:
+    print(word, score)
+ 
+# 11. Generate context-target training examples
+dat = []
+for i in range(2, len(data1) - 2):
+    context = [
+        data1[i - 2],
+        data1[i - 1],
+        data1[i + 1],
+        data1[i + 2]
+    ]
+    target = data1[i]
+    dat.append((context, target))
+ 
+print("First five context-target examples:")
+print(dat[:5])
+ 
+# 12. Display one context and its target
+i = 3
+print("Context:", dat[i][0])
+print("Target:", dat[i][1])
+ 
+# 13. Predict an output word from the context
+print("Predicted output word:")
+print(model1.predict_output_word(dat[i][0]))
+ 
+# 14. Reduce word vectors to two dimensions using PCA
+words = model1.wv.index_to_key
+X = model1.wv[words]
+ 
+pca = PCA(n_components=2)
+result = pca.fit_transform(X)
+ 
+# 15. Plot word vectors
+plt.figure(figsize=(10, 10))
+plt.scatter(result[:, 0], result[:, 1])
+ 
+for i, word in enumerate(words):
+    plt.annotate(word, xy=(result[i, 0], result[i, 1]))
+ 
+plt.title("Word2Vec Word Embeddings using PCA")
+plt.xlabel("Principal Component 1")
+plt.ylabel("Principal Component 2")
+plt.show()
+Important points to explain
+* CBOW stands for Continuous Bag of Words. It predicts a target word using the surrounding context words.
+* Tokenization splits text into sentences and words. Stop words such as 'the' and 'is' are removed.
+* The window size is 5. The practical forms a context using two words before and two words after the target word.
+* Word2Vec learns a vector representation for each word. Similar words can be found using most_similar().
+* PCA reduces the word vectors to two dimensions so they can be displayed on a graph.
+* The uploaded code uses Gensim Word2Vec with sg=0, which selects CBOW. The context-target list is also generated separately for demonstration.
+
+
+Jupyter Notebook Execution Checklist
+* Open Jupyter Notebook and create a new Python 3 notebook.
+* Run the installation cell only if a required package is missing.
+* Run import statements first, followed by dataset loading and preprocessing.
+* Define the model, compile it, and then run the training cell.
+* Run evaluation and plotting cells after training completes.
+* If a variable is not defined, check whether the earlier cell was executed. If package installation was just performed, restart the kernel and run the notebook from the top.
+Common errors
+* ModuleNotFoundError: install the missing package in the active notebook environment using %pip install package-name.
+* NameError: run the earlier cell that defines the missing variable.
+* TensorFlow GPU warning on native Windows: TensorFlow may use the CPU. This warning alone does not mean the code cannot run.
+* Memory or slow-training issue: reduce batch size or epochs, or run the model on a smaller subset while testing.
+One important distinction
+The uploaded syllabus says Assignment 2 should use SGD, while the supplied Assignment 2 PDF uses Adam(0.01). This document keeps Adam to match the supplied practical code. If your faculty specifically requires SGD, change the optimizer to SGD, for example: optimizer = tf.keras.optimizers.SGD(learning_rate=0.01).
+For Assignment 3, the uploaded PDF divides training into 5 epochs followed by another 10 epochs. This document uses one 15-epoch training call, which is simpler and continues training for the same total number of epochs.
+Deep Learning Practicals | Assignments 2-5
+
